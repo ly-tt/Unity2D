@@ -97,3 +97,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+# 忽略个人临时场景
+Assets/Scenes/Temp_*
+Assets/Scenes/*.backup
+
+# 但保留开发场景
+!Assets/Scenes/Development_*
