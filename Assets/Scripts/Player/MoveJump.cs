@@ -70,9 +70,6 @@ public class MoveJump : MonoBehaviour
 
         // --- 跳跃逻辑 ---
         HandleJumpAndGravity();
-
-        // 调试信息
-        Debug.Log($"Grounded: {isGrounded}, GScale: {currentGScale}, Vel: {rb.velocity}");
     }
 
     void FixedUpdate()

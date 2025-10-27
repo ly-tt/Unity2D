@@ -973,12 +973,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afde1d6faf5b4384981913436065798e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveSlotButtons:
-  - {fileID: 346976536}
-  - {fileID: 1845356571}
-  - {fileID: 1657120695}
+  titleText: {fileID: 0}
+  saveSlots:
+  - {fileID: 346976534}
+  - {fileID: 1845356569}
+  - {fileID: 1657120693}
+  levelTexts:
+  - {fileID: 1920799335}
+  - {fileID: 2110533315}
+  - {fileID: 1662424978}
+  fragmentTexts:
+  - {fileID: 502955120}
+  - {fileID: 1114441721}
+  - {fileID: 1684219900}
+  timeTexts:
+  - {fileID: 1910204739}
+  - {fileID: 901252716}
+  - {fileID: 1015305750}
   backButton: {fileID: 832205827}
-  gameSceneName: SampleScene
+  mainMenuPanel: {fileID: 1755500074}
+  levelSceneNames: []
 --- !u!1 &502955118
 GameObject:
   m_ObjectHideFlags: 0
@@ -1404,7 +1418,7 @@ MonoBehaviour:
   continueButtonName: ContinueButton
   settingsButtonName: SettingsButton
   quitButtonName: QuitButton
-  gameSceneName: testLevel0
+  gameSceneName: testLevel02
 --- !u!4 &598422950
 Transform:
   m_ObjectHideFlags: 0

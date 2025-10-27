@@ -16155,7 +16155,7 @@ GameObject:
   - component: {fileID: 7486190704210919043}
   - component: {fileID: 4767503049463424044}
   - component: {fileID: 7486190704210919045}
-  - component: {fileID: 7486190704210919044}
+  - component: {fileID: 7486190704210919046}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -19069,12 +19069,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afde1d6faf5b4384981913436065798e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveSlotButtons:
-  - {fileID: 5713314036193849186}
-  - {fileID: 2791478477638395859}
-  - {fileID: 6615157208319455299}
+  titleText: {fileID: 0}
+  saveSlots: []
+  levelTexts: []
+  fragmentTexts: []
+  timeTexts: []
   backButton: {fileID: 3696753929597971518}
-  gameSceneName: SampleScene
+  mainMenuPanel: {fileID: 0}
+  levelSceneNames: []
 --- !u!1 &3030041543942892512
 GameObject:
   m_ObjectHideFlags: 0
@@ -23505,28 +23507,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathYThreshold: -10
-  respawnPoint: {fileID: 0}
-  deathPanel: {fileID: 0}
-  respawnButton: {fileID: 0}
-  quitButton: {fileID: 0}
-  deathMessage: {fileID: 0}
---- !u!114 &7486190704210919044
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1140258753812628692}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03b842d23702c6b4aaf50332735be259, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  goalTag: LevelGoal
-  levelCompleted: 0
-  rb: {fileID: 0}
-  moveJump: {fileID: 0}
-  uiManager: {fileID: 0}
+  deathTriggers: []
 --- !u!114 &7486190704210919045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23540,6 +23521,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   respawnPoint: {fileID: 4147099135642511922}
+--- !u!114 &7486190704210919046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140258753812628692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af7e93291970d964db6911921b540aac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetSquare: {fileID: 0}
+  levelCompletePanel: {fileID: 0}
 --- !u!222 &7520573419133487281
 CanvasRenderer:
   m_ObjectHideFlags: 0

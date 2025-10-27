@@ -20,7 +20,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private string quitButtonName = "QuitButton";
 
     [Header("场景名称")]
-    [SerializeField] private string gameSceneName = "testLevel0";
+    [SerializeField] private string gameSceneName = "testLevel02";
 
     // 运行时引用
     private GameObject mainMenuPanel;
@@ -102,8 +102,20 @@ public class MainMenu : MonoBehaviour
 
     private void ShowSaveSlotMenu()
     {
+        if (saveSlotMenuPanel == null)
+        {
+            Debug.LogError("⚠️ saveSlotMenuPanel 未找到，请检查名称！");
+            return;
+        }
+
         mainMenuPanel?.SetActive(false);
-        saveSlotMenuPanel?.SetActive(true);
+        saveSlotMenuPanel.SetActive(true);
+
+        var menu = saveSlotMenuPanel.GetComponent<SaveSlotMenu>();
+        if (menu != null)
+            menu.mainMenuPanel = mainMenuPanel;
+        else
+            Debug.LogError("⚠️ saveSlotMenuPanel 上未找到 SaveSlotMenu 脚本！");
     }
 
     private void ShowSettingsMenu()
@@ -114,7 +126,17 @@ public class MainMenu : MonoBehaviour
 
     private void CheckSaveExists()
     {
-        bool hasSave = PlayerPrefs.HasKey("HasSaveData");
+        bool hasSave = false;
+
+        for (int i = 0; i < 3; i++) // 三个存档槽
+        {
+            if (SaveSystem.Load(i) != null)
+            {
+                hasSave = true;
+                break;
+            }
+        }
+
         continueButton.interactable = hasSave;
 
         ColorBlock colors = continueButton.colors;
@@ -123,4 +145,5 @@ public class MainMenu : MonoBehaviour
             : new Color(0.5f, 0.5f, 0.5f, 0.5f);
         continueButton.colors = colors;
     }
+
 }

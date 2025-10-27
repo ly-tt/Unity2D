@@ -16977,7 +16977,7 @@ MonoBehaviour:
   saveButton: {fileID: 9149794759317330572}
   nextLevelButton: {fileID: 5671963482122131670}
   renewButton: {fileID: 6297794051467393337}
-  nextLevelSceneName: testLevel02 1
+  nextLevelSceneName: testLevel02 4
 --- !u!114 &1495970250523479907
 MonoBehaviour:
   m_ObjectHideFlags: 0
