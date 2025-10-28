@@ -179,17 +179,33 @@ public class PlayerScript : MonoBehaviour
         // 只有获得碎片2后，C 键才生效
         if (hasBoxGravityInvertAbility && Input.GetKeyDown(KeyCode.C))
         {
+            // 查找所有 Box 和 special 标签的物体
             GameObject[] boxes = GameObject.FindGameObjectsWithTag("Box");
+            GameObject[] specials = GameObject.FindGameObjectsWithTag("special");
 
-            foreach (GameObject box in boxes)
+            // 合并两个数组（简单遍历即可，无需真正合并）
+            foreach (GameObject obj in boxes)
             {
-                Rigidbody2D rbBox = box.GetComponent<Rigidbody2D>();
-                if (rbBox != null)
-                {
-                    rbBox.gravityScale *= -1;
-                    rbBox.velocity = new Vector2(rbBox.velocity.x, -rbBox.velocity.y);
-                }
+                ApplyGravityInvertToObject(obj);
             }
+
+            foreach (GameObject obj in specials)
+            {
+                ApplyGravityInvertToObject(obj);
+            }
+        }
+    }
+
+    // 抽离逻辑，避免重复代码
+    private void ApplyGravityInvertToObject(GameObject obj)
+    {
+        if (obj == null) return;
+
+        Rigidbody2D rbObj = obj.GetComponent<Rigidbody2D>();
+        if (rbObj != null)
+        {
+            rbObj.gravityScale *= -1;
+            rbObj.velocity = new Vector2(rbObj.velocity.x, -rbObj.velocity.y);
         }
     }
 
