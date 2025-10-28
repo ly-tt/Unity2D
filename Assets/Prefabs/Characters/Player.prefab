@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2238316290320946559}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: BoxCheckPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 387170570480071531}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -41,9 +41,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2106017594399882333}
   - component: {fileID: 2502981807309932810}
-  - component: {fileID: 6053118837849869584}
   - component: {fileID: 3369312405474551325}
-  m_Layer: 7
+  - component: {fileID: 4254347128719776545}
+  m_Layer: 8
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -59,9 +59,9 @@ Transform:
   m_GameObject: {fileID: 5886198200606703001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.23, y: -1.09, z: -0.0029682806}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: -14.3, y: -4.03, z: -0.0029682806}
+  m_LocalScale: {x: 1.9999999, y: 1.9999999, z: 1.9999999}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5876143098486307567}
   - {fileID: 2238316290320946559}
@@ -83,7 +83,7 @@ Rigidbody2D:
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 3.5
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 9e023796d19335940b5e396797e53864, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -94,45 +94,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &6053118837849869584
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5886198200606703001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a16d19ce0d64a1c46b8e9d4b543433e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rb: {fileID: 2502981807309932810}
-  moveSpeed: 5
-  playerAnimator: {fileID: 7637675287249277479}
-  isRight: 1
-  isMoving: 0
-  jumpForce: 12
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 320
-  ground_check_distance: 0.74
-  groundCheckOffset: {x: 0, y: 0}
-  isGround: 0
-  isJump: 0
-  isAir: 0
-  dashSpeed: 10
-  dashTime: 0.2
-  dashCoolDownTime: 1
-  isDashing: 0
-  canDash: 1
-  isDead: 0
-  isGravityInverted: 0
-  boxCheckPoint: {fileID: 2238316290320946559}
-  boxLayer:
-    serializedVersion: 2
-    m_Bits: 256
-  boxCheckDistance: 0.37
-  isPulling: 0
 --- !u!70 &3369312405474551325
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -142,7 +103,7 @@ CapsuleCollider2D:
   m_GameObject: {fileID: 5886198200606703001}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 9e023796d19335940b5e396797e53864, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -168,6 +129,47 @@ CapsuleCollider2D:
   m_Offset: {x: -0.014267921, y: 0.059449553}
   m_Size: {x: 0.690238, y: 1.4423041}
   m_Direction: 0
+--- !u!114 &4254347128719776545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5886198200606703001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ab5658afa31885488e69056c8ab12ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rb: {fileID: 2502981807309932810}
+  moveSpeed: 7
+  playerAnimator: {fileID: 7637675287249277479}
+  isRight: 1
+  isMoving: 0
+  jumpForce: 17
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 200
+  ground_check_distance: 1.41
+  groundCheckOffset: {x: 0, y: 0}
+  isGround: 0
+  isJump: 0
+  isAir: 0
+  dashSpeed: 10
+  dashTime: 0.2
+  dashCoolDownTime: 1
+  isDashing: 0
+  canDash: 1
+  isDead: 0
+  isGravityInverted: 0
+  hasGravityInvertAbility: 0
+  hasBoxGravityInvertAbility: 0
+  boxLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  boxCheckDistance: 0.7
+  boxCheckOffset: {x: 0, y: -0.3}
+  isPulling: 0
 --- !u!1 &5938100626761407027
 GameObject:
   m_ObjectHideFlags: 0
@@ -179,7 +181,7 @@ GameObject:
   - component: {fileID: 5876143098486307567}
   - component: {fileID: 4801707549357879094}
   - component: {fileID: 7637675287249277479}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: animator
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -242,7 +244,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1956643571396668674, guid: eb7f1657c88ed0f44b902517a6726c81, type: 3}
+  m_Sprite: {fileID: -5948761376725378699, guid: eb7f1657c88ed0f44b902517a6726c81, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
