@@ -18,21 +18,35 @@ public class PressureButton : MonoBehaviour
     [Header("按钮动画（可选）")]
     public Animator buttonAnimator;
 
+    [Header("音效")]
+    public AudioClip pressSound;      // 按下音效
+    public AudioClip releaseSound;    // 松开音效
+    public AudioSource audioSource;   // 拖入子物体上的 AudioSource
+
     [Header("检测设置")]
-    public LayerMask playerAndBoxLayer; // 在 Inspector 中指定包含 Player 和 Box 的 Layer
-    public float checkHeightOffset = 0.1f; // 从按钮表面往上偏移
-    public float checkDistance = 0.6f;     // 射线长度（应略大于角色脚底到重心距离）
+    public LayerMask playerAndBoxLayer;
+    public float checkHeightOffset = 0.1f;
+    public float checkDistance = 0.6f;
 
     private bool isPressed = false;
     private bool isPermanentlyOff = false;
 
     void Start()
     {
+        // 安全检查：如果没有手动指定 audioSource，尝试自动查找子物体
+        if (audioSource == null)
+        {
+            audioSource = GetComponentInChildren<AudioSource>();
+            if (audioSource == null)
+            {
+                Debug.LogWarning("PressureButton: No AudioSource assigned or found. Sound will be disabled.", this);
+            }
+        }
+
         Collider2D col = GetComponent<Collider2D>();
         if (col != null && col.isTrigger)
         {
-            // 可以保留为 Trigger（用于可视化或其它用途），但不用于逻辑判断
-            // 或者直接设为非 Trigger（推荐）
+            // 可选：强制设为非 Trigger（射线检测不需要 Trigger）
             // col.isTrigger = false;
         }
     }
@@ -114,12 +128,24 @@ public class PressureButton : MonoBehaviour
 
     void PlayButtonPress()
     {
+        // 触发动画
         buttonAnimator?.SetTrigger("Press");
+        // 播放音效
+        if (audioSource != null && pressSound != null)
+        {
+            audioSource.PlayOneShot(pressSound);
+        }
     }
 
     void PlayButtonRelease()
     {
+        // 触发动画
         buttonAnimator?.SetTrigger("Release");
+        // 播放音效
+        if (audioSource != null && releaseSound != null)
+        {
+            audioSource.PlayOneShot(releaseSound);
+        }
     }
 
     void OnDrawGizmos()

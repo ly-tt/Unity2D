@@ -2,62 +2,80 @@
 
 public class PlayerScript : MonoBehaviour
 {
+    // ========== 移动 ==========
     [Header("Player Move")]
     public Rigidbody2D rb;
     private float xInput;
-    public float moveSpeed = 5;
+    public float moveSpeed = 5f;
     public Animator playerAnimator;
-    private int facingDri = 1;
+    private int facingDir = 1;
     [HideInInspector] public bool isRight = true;
     [HideInInspector] public bool isMoving;
 
+    // ========== 跳跃 ==========
     [Header("Player Jump")]
-    public float jumpForce = 5;
-    public LayerMask groundLayer; // ← 应包含 "Ground" 和 "Box" 层！
-    [SerializeField] private float ground_check_distance;
-    [SerializeField] private Vector2 groundCheckOffset = Vector2.zero;
+    public float jumpForce = 5f;
+    public LayerMask groundLayer;
+    [SerializeField] private float groundCheckDistance = 0.1f;
+    [SerializeField] private Vector2 groundCheckOffset = new Vector2(0f, -0.1f);
     [HideInInspector] public bool isGround;
-    [HideInInspector] public bool isJump = false;
-    [HideInInspector] public bool isAir = false;
 
-    [Header("Player Dash")]
-    public float dashSpeed = 10f;
-    public float dashTime = 0.2f;
-    public float dashCoolDownTime = 1f;
-    [HideInInspector] public bool isDashing = false;
-    [HideInInspector] public bool canDash = true;
-
-    [Header("Player Dead")]
-    public bool isDead = false;
-
-    // ===== 重力颠倒系统 =====
+    // ========== 重力反转系统 ==========
     [Header("Gravity Invert")]
     public bool isGravityInverted = false;
     private Vector2 groundCheckDirection => isGravityInverted ? Vector2.up : Vector2.down;
     private KeyCode jumpKey => isGravityInverted ? KeyCode.S : KeyCode.W;
 
-    // ===== 星星碎片能力标志 =====
-    [HideInInspector] public bool hasGravityInvertAbility = false;     // 碎片1：玩家重力反转
-    [HideInInspector] public bool hasBoxGravityInvertAbility = false;  // 碎片2：箱子重力反转
+    // ========== 能力标志 ==========
+    [HideInInspector] public bool hasGravityInvertAbility = false;      // X 键：自身重力反转
+    [HideInInspector] public bool hasBoxGravityInvertAbility = false;   // C 键：箱子重力反转
 
-    // ===== 推拉箱子系统 =====
+    // ========== 推拉箱子 ==========
     [Header("Box Interaction")]
-    public LayerMask boxLayer; // ← 必须设为 "Box" 层！
+    public LayerMask boxLayer;
     public float boxCheckDistance = 0.6f;
     [SerializeField] private Vector2 boxCheckOffset = new Vector2(0f, -0.3f);
     [HideInInspector] public bool isPulling = false;
-
+    [HideInInspector] public bool isPushingOrPulling = false; // 👈 新增：统一推拉状态
     private Rigidbody2D currentBox = null;
+
+    // ========== 音效系统 ==========
+    [Header("Audio - Walk")]
+    public AudioSource walkAudioSource;          // 挂在子物体 "WalkAudio" 上
+    public AudioClip[] walkSounds;               // 5个脚步音效
+
+    [Header("Audio - SFX")]
+    public AudioSource sfxAudioSource;           // 挂在子物体 "SfxAudio" 上
+    public AudioClip jumpSound;                  // 起跳
+    public AudioClip landSound;                  // 落地
+    public AudioClip gravityInvertUpSound;       // 自身：正常 → 向上
+    public AudioClip gravityInvertDownSound;     // 自身：反转 → 向下
+    public AudioClip boxInvertUpSound;           // 箱子：正常 → 向上
+    public AudioClip boxInvertDownSound;         // 箱子：反转 → 向下
+
+    [Header("Audio - Box Push/Pull")]
+    public AudioSource boxPushAudioSource;       // 挂在子物体 "BoxPushAudio" 上
+    public AudioClip boxPushSound;               // 推拉箱子的循环音效
+
+    // ========== 状态缓存 ==========
+    private bool wasMoving = false;
+    private bool wasGroundedLastFrame = false;
+    private bool wasPushingOrPulling = false;    // 👈 新增：用于音效切换
 
     void Update()
     {
         FlipController();
         PlayerMove();
-        check_ground();
+        CheckGround();
         PlayerJump();
         HandleGravityInvert();
-        HandleBoxInteraction();
+        HandleBoxInteraction();        // 更新 isPushingOrPulling
         HandleBoxGravityInvert();
+
+        // 音效逻辑
+        HandleWalkSound();
+        HandleLandSound();
+        HandleBoxPushSound();          // 👈 新增：推拉音效
     }
 
     void FixedUpdate()
@@ -65,10 +83,10 @@ public class PlayerScript : MonoBehaviour
         PlayerMoveFix();
     }
 
-    private void check_ground()
+    private void CheckGround()
     {
         Vector2 rayOrigin = (Vector2)transform.position + groundCheckOffset;
-        isGround = Physics2D.Raycast(rayOrigin, groundCheckDirection, ground_check_distance, groundLayer);
+        isGround = Physics2D.Raycast(rayOrigin, groundCheckDirection, groundCheckDistance, groundLayer);
     }
 
     private void FlipController()
@@ -83,7 +101,7 @@ public class PlayerScript : MonoBehaviour
 
     private void Flip()
     {
-        facingDri *= -1;
+        facingDir *= -1;
         isRight = !isRight;
         transform.Rotate(0, 180, 0);
     }
@@ -91,7 +109,7 @@ public class PlayerScript : MonoBehaviour
     private void PlayerMove()
     {
         xInput = Input.GetAxisRaw("Horizontal");
-        isMoving = rb.velocity.x != 0;
+        isMoving = Mathf.Abs(rb.velocity.x) > 0.01f;
         playerAnimator.SetBool("isMoving", isMoving);
     }
 
@@ -109,14 +127,23 @@ public class PlayerScript : MonoBehaviour
         {
             float jumpVelocity = isGravityInverted ? -jumpForce : jumpForce;
             rb.velocity = new Vector2(rb.velocity.x, jumpVelocity);
+            PlayJumpSound();
         }
     }
 
     private void HandleGravityInvert()
     {
-        // 只有获得碎片1后，X 键才生效
         if (hasGravityInvertAbility && Input.GetKeyDown(KeyCode.X))
         {
+            if (!isGravityInverted)
+            {
+                PlayGravityInvertSound(gravityInvertUpSound);
+            }
+            else
+            {
+                PlayGravityInvertSound(gravityInvertDownSound);
+            }
+
             transform.Rotate(180, 0, 0);
             rb.gravityScale *= -1;
             isGravityInverted = !isGravityInverted;
@@ -125,9 +152,6 @@ public class PlayerScript : MonoBehaviour
 
     private void HandleBoxInteraction()
     {
-        isPulling = false;
-        currentBox = null;
-
         bool isHoldingZ = Input.GetKey(KeyCode.Z);
         bool wantsToMoveLeft = xInput < 0;
         bool wantsToMoveRight = xInput > 0;
@@ -140,55 +164,85 @@ public class PlayerScript : MonoBehaviour
         Debug.DrawRay(rayOrigin, Vector2.left * boxCheckDistance, Color.cyan);
         Debug.DrawRay(rayOrigin, Vector2.right * boxCheckDistance, Color.magenta);
 
+        isPushingOrPulling = false;
+        currentBox = null;
+
         if (hitLeft.collider != null)
         {
             currentBox = hitLeft.collider.attachedRigidbody;
-
-            if (wantsToMoveRight)
+            if (currentBox != null)
             {
-                if (currentBox != null)
+                if (wantsToMoveRight)
+                {
+                    // 推：向右走，顶左边的箱子 → 箱子向右
                     currentBox.velocity = new Vector2(moveSpeed, currentBox.velocity.y);
-            }
-            else if (isHoldingZ && wantsToMoveLeft)
-            {
-                isPulling = true;
-                if (currentBox != null)
+                    isPushingOrPulling = true;
+                }
+                else if (isHoldingZ && wantsToMoveLeft)
+                {
+                    // 拉：按 Z + 向左走，拉左边的箱子 → 箱子向左
                     currentBox.velocity = new Vector2(-moveSpeed, currentBox.velocity.y);
+                    isPushingOrPulling = true;
+                    isPulling = true;
+                }
             }
         }
         else if (hitRight.collider != null)
         {
             currentBox = hitRight.collider.attachedRigidbody;
-
-            if (wantsToMoveLeft)
+            if (currentBox != null)
             {
-                if (currentBox != null)
+                if (wantsToMoveLeft)
+                {
+                    // 推：向左走，顶右边的箱子 → 箱子向左
                     currentBox.velocity = new Vector2(-moveSpeed, currentBox.velocity.y);
-            }
-            else if (isHoldingZ && wantsToMoveRight)
-            {
-                isPulling = true;
-                if (currentBox != null)
+                    isPushingOrPulling = true;
+                }
+                else if (isHoldingZ && wantsToMoveRight)
+                {
+                    // 拉：按 Z + 向右走，拉右边的箱子 → 箱子向右
                     currentBox.velocity = new Vector2(moveSpeed, currentBox.velocity.y);
+                    isPushingOrPulling = true;
+                    isPulling = true;
+                }
             }
+        }
+
+        // 如果没在拉，确保 isPulling 为 false
+        if (!isHoldingZ || (!wantsToMoveLeft && !wantsToMoveRight))
+        {
+            isPulling = false;
         }
     }
 
     private void HandleBoxGravityInvert()
     {
-        // 只有获得碎片2后，C 键才生效
         if (hasBoxGravityInvertAbility && Input.GetKeyDown(KeyCode.C))
         {
-            // 查找所有 Box 和 special 标签的物体
             GameObject[] boxes = GameObject.FindGameObjectsWithTag("Box");
-            GameObject[] specials = GameObject.FindGameObjectsWithTag("special");
+            if (boxes.Length == 0) return;
 
-            // 合并两个数组（简单遍历即可，无需真正合并）
+            Rigidbody2D firstBoxRb = boxes[0].GetComponent<Rigidbody2D>();
+            if (firstBoxRb != null)
+            {
+                bool isCurrentlyInverted = firstBoxRb.gravityScale < 0;
+
+                if (isCurrentlyInverted)
+                {
+                    PlayGravityInvertSound(boxInvertDownSound);
+                }
+                else
+                {
+                    PlayGravityInvertSound(boxInvertUpSound);
+                }
+            }
+
             foreach (GameObject obj in boxes)
             {
                 ApplyGravityInvertToObject(obj);
             }
 
+            GameObject[] specials = GameObject.FindGameObjectsWithTag("special");
             foreach (GameObject obj in specials)
             {
                 ApplyGravityInvertToObject(obj);
@@ -196,7 +250,6 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
-    // 抽离逻辑，避免重复代码
     private void ApplyGravityInvertToObject(GameObject obj)
     {
         if (obj == null) return;
@@ -209,10 +262,93 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
+    // ========== 音效逻辑 ==========
+
+    private void HandleWalkSound()
+    {
+        bool isCurrentlyMoving = Mathf.Abs(rb.velocity.x) > 0.01f;
+
+        if (isCurrentlyMoving && !wasMoving)
+        {
+            if (walkAudioSource != null && walkSounds != null && walkSounds.Length > 0)
+            {
+                int randomIndex = Random.Range(0, walkSounds.Length);
+                walkAudioSource.clip = walkSounds[randomIndex];
+                walkAudioSource.loop = true;
+                walkAudioSource.Play();
+            }
+        }
+        else if (!isCurrentlyMoving && wasMoving)
+        {
+            if (walkAudioSource != null)
+            {
+                walkAudioSource.Stop();
+            }
+        }
+
+        wasMoving = isCurrentlyMoving;
+    }
+
+    private void HandleLandSound()
+    {
+        if (isGround && !wasGroundedLastFrame)
+        {
+            PlayLandSound();
+        }
+        wasGroundedLastFrame = isGround;
+    }
+
+    private void HandleBoxPushSound()
+    {
+        if (isPushingOrPulling && !wasPushingOrPulling)
+        {
+            if (boxPushAudioSource != null && boxPushSound != null)
+            {
+                boxPushAudioSource.clip = boxPushSound;
+                boxPushAudioSource.loop = true;
+                boxPushAudioSource.Play();
+            }
+        }
+        else if (!isPushingOrPulling && wasPushingOrPulling)
+        {
+            if (boxPushAudioSource != null)
+            {
+                boxPushAudioSource.Stop();
+            }
+        }
+
+        wasPushingOrPulling = isPushingOrPulling;
+    }
+
+    private void PlayJumpSound()
+    {
+        if (sfxAudioSource != null && jumpSound != null)
+        {
+            sfxAudioSource.PlayOneShot(jumpSound);
+        }
+    }
+
+    private void PlayLandSound()
+    {
+        if (sfxAudioSource != null && landSound != null)
+        {
+            sfxAudioSource.PlayOneShot(landSound);
+        }
+    }
+
+    private void PlayGravityInvertSound(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null)
+        {
+            sfxAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    // ========== Gizmos 调试 ==========
     private void OnDrawGizmos()
     {
         Vector2 groundOrigin = (Vector2)transform.position + groundCheckOffset;
-        Vector2 groundEnd = groundOrigin + groundCheckDirection * ground_check_distance;
+        Vector2 groundEnd = groundOrigin + groundCheckDirection * groundCheckDistance;
         Gizmos.color = isGround ? Color.green : Color.red;
         Gizmos.DrawLine(groundOrigin, groundEnd);
 
