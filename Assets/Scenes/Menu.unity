@@ -1418,7 +1418,7 @@ MonoBehaviour:
   continueButtonName: ContinueButton
   settingsButtonName: SettingsButton
   quitButtonName: QuitButton
-  gameSceneName: testLevel02
+  gameSceneName: Level_0
 --- !u!4 &598422950
 Transform:
   m_ObjectHideFlags: 0
