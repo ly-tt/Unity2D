@@ -30,14 +30,16 @@ public class PlayerScript : MonoBehaviour
     [HideInInspector] public bool hasGravityInvertAbility = false;      // X 键：自身重力反转
     [HideInInspector] public bool hasBoxGravityInvertAbility = false;   // C 键：箱子重力反转
 
-    // ========== 推拉箱子 ==========
+    // ========== 推拉箱子（使用 PullZone 子物体）==========
     [Header("Box Interaction")]
     public LayerMask boxLayer;
-    public float boxCheckDistance = 0.6f;
-    [SerializeField] private Vector2 boxCheckOffset = new Vector2(0f, -0.3f);
     [HideInInspector] public bool isPulling = false;
-    [HideInInspector] public bool isPushingOrPulling = false; // 👈 新增：统一推拉状态
+    [HideInInspector] public bool isPushingOrPulling = false;
     private Rigidbody2D currentBox = null;
+
+    // 不再需要 public 引用 pullZoneLeft/Right（改用子物体自动检测）
+    private Rigidbody2D boxInLeftZone;
+    private Rigidbody2D boxInRightZone;
 
     // ========== 音效系统 ==========
     [Header("Audio - Walk")]
@@ -60,7 +62,7 @@ public class PlayerScript : MonoBehaviour
     // ========== 状态缓存 ==========
     private bool wasMoving = false;
     private bool wasGroundedLastFrame = false;
-    private bool wasPushingOrPulling = false;    // 👈 新增：用于音效切换
+    private bool wasPushingOrPulling = false;
 
     void Update()
     {
@@ -69,13 +71,13 @@ public class PlayerScript : MonoBehaviour
         CheckGround();
         PlayerJump();
         HandleGravityInvert();
-        HandleBoxInteraction();        // 更新 isPushingOrPulling
+        HandleBoxInteraction();        // 更新 isPushingOrPulling 和 isPulling
         HandleBoxGravityInvert();
 
         // 音效逻辑
         HandleWalkSound();
         HandleLandSound();
-        HandleBoxPushSound();          // 👈 新增：推拉音效
+        HandleBoxPushSound();
     }
 
     void FixedUpdate()
@@ -91,7 +93,7 @@ public class PlayerScript : MonoBehaviour
 
     private void FlipController()
     {
-        if (isPulling) return;
+        if (isPulling) return; // 拉箱子时不翻转！
 
         if (rb.velocity.x > 0 && !isRight)
             Flip();
@@ -150,68 +152,55 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
+    // ========== 推拉箱子逻辑（依赖 PullZone 子物体）==========
     private void HandleBoxInteraction()
     {
-        bool isHoldingZ = Input.GetKey(KeyCode.Z);
-        bool wantsToMoveLeft = xInput < 0;
-        bool wantsToMoveRight = xInput > 0;
-
-        Vector2 rayOrigin = (Vector2)transform.position + boxCheckOffset;
-
-        RaycastHit2D hitLeft = Physics2D.Raycast(rayOrigin, Vector2.left, boxCheckDistance, boxLayer);
-        RaycastHit2D hitRight = Physics2D.Raycast(rayOrigin, Vector2.right, boxCheckDistance, boxLayer);
-
-        Debug.DrawRay(rayOrigin, Vector2.left * boxCheckDistance, Color.cyan);
-        Debug.DrawRay(rayOrigin, Vector2.right * boxCheckDistance, Color.magenta);
-
+        // 每帧重置状态
+        isPulling = false;
         isPushingOrPulling = false;
         currentBox = null;
 
-        if (hitLeft.collider != null)
+        float xInput = Input.GetAxisRaw("Horizontal");
+        bool isHoldingZ = Input.GetKey(KeyCode.Z);
+
+        // ===== 左侧有箱子（在左交互区）=====
+        if (boxInLeftZone != null)
         {
-            currentBox = hitLeft.collider.attachedRigidbody;
-            if (currentBox != null)
+            if (!isHoldingZ && xInput > 0)
             {
-                if (wantsToMoveRight)
-                {
-                    // 推：向右走，顶左边的箱子 → 箱子向右
-                    currentBox.velocity = new Vector2(moveSpeed, currentBox.velocity.y);
-                    isPushingOrPulling = true;
-                }
-                else if (isHoldingZ && wantsToMoveLeft)
-                {
-                    // 拉：按 Z + 向左走，拉左边的箱子 → 箱子向左
-                    currentBox.velocity = new Vector2(-moveSpeed, currentBox.velocity.y);
-                    isPushingOrPulling = true;
-                    isPulling = true;
-                }
+                // 不按 Z + 向右走 → 推左边的箱子
+                boxInLeftZone.velocity = new Vector2(moveSpeed, boxInLeftZone.velocity.y);
+                isPushingOrPulling = true;
+                currentBox = boxInLeftZone;
             }
-        }
-        else if (hitRight.collider != null)
-        {
-            currentBox = hitRight.collider.attachedRigidbody;
-            if (currentBox != null)
+            else if (isHoldingZ && xInput < 0)
             {
-                if (wantsToMoveLeft)
-                {
-                    // 推：向左走，顶右边的箱子 → 箱子向左
-                    currentBox.velocity = new Vector2(-moveSpeed, currentBox.velocity.y);
-                    isPushingOrPulling = true;
-                }
-                else if (isHoldingZ && wantsToMoveRight)
-                {
-                    // 拉：按 Z + 向右走，拉右边的箱子 → 箱子向右
-                    currentBox.velocity = new Vector2(moveSpeed, currentBox.velocity.y);
-                    isPushingOrPulling = true;
-                    isPulling = true;
-                }
+                // 按 Z + 向左走（后退）→ 拉左边的箱子
+                boxInLeftZone.velocity = new Vector2(-moveSpeed, boxInLeftZone.velocity.y);
+                isPushingOrPulling = true;
+                isPulling = true;
+                currentBox = boxInLeftZone;
             }
         }
 
-        // 如果没在拉，确保 isPulling 为 false
-        if (!isHoldingZ || (!wantsToMoveLeft && !wantsToMoveRight))
+        // ===== 右侧有箱子（在右交互区）=====
+        if (boxInRightZone != null)
         {
-            isPulling = false;
+            if (!isHoldingZ && xInput < 0)
+            {
+                // 不按 Z + 向左走 → 推右边的箱子
+                boxInRightZone.velocity = new Vector2(-moveSpeed, boxInRightZone.velocity.y);
+                isPushingOrPulling = true;
+                currentBox = boxInRightZone;
+            }
+            else if (isHoldingZ && xInput > 0)
+            {
+                // 按 Z + 向右走（后退）→ 拉右边的箱子
+                boxInRightZone.velocity = new Vector2(moveSpeed, boxInRightZone.velocity.y);
+                isPushingOrPulling = true;
+                isPulling = true;
+                currentBox = boxInRightZone;
+            }
         }
     }
 
@@ -344,18 +333,23 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
-    // ========== Gizmos 调试 ==========
+    // ========== 供 PullZone 调用的接口 ==========
+    public void SetBoxInLeftZone(Rigidbody2D box)
+    {
+        boxInLeftZone = box;
+    }
+
+    public void SetBoxInRightZone(Rigidbody2D box)
+    {
+        boxInRightZone = box;
+    }
+
+    // ========== Gizmos 调试（可选）==========
     private void OnDrawGizmos()
     {
         Vector2 groundOrigin = (Vector2)transform.position + groundCheckOffset;
         Vector2 groundEnd = groundOrigin + groundCheckDirection * groundCheckDistance;
         Gizmos.color = isGround ? Color.green : Color.red;
         Gizmos.DrawLine(groundOrigin, groundEnd);
-
-        Vector2 boxOrigin = (Vector2)transform.position + boxCheckOffset;
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(boxOrigin, boxOrigin + Vector2.left * boxCheckDistance);
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawLine(boxOrigin, boxOrigin + Vector2.right * boxCheckDistance);
     }
 }
